@@ -39,7 +39,7 @@ class GlassNavbar extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () => onNavigationTap?.call(0),
                   child: Image.asset(
-                    'assets/images/logo.png',
+                    'assets/images/image.png',
                     height: isSmallScreen ? 28 : 32,
                     fit: BoxFit.contain,
                     color: AppColors.textPrimary,

@@ -41,7 +41,7 @@ class _CursorRevealHeroSectionState extends State<CursorRevealHeroSection> with 
       end: 1.2,
     ).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
 
-    _breathController = AnimationController(duration: const Duration(milliseconds: 6000), vsync: this);
+    _breathController = AnimationController(duration: const Duration(milliseconds: 8000), vsync: this);
     _breathAnimation = Tween<double>(
       begin: 0,
       end: 1,
@@ -80,6 +80,9 @@ class _CursorRevealHeroSectionState extends State<CursorRevealHeroSection> with 
 
             if (isDesktop) _buildMaskedForegroundImage(),
 
+            // ADDED: The new, subtle god rays effect layer
+            if (isDesktop) _buildGodRaysEffect(),
+
             _buildContentOverlay(context),
 
             if (isDesktop && _isHovering) _buildCursorRevealIndicator(),
@@ -114,24 +117,25 @@ class _CursorRevealHeroSectionState extends State<CursorRevealHeroSection> with 
     },
   );
 
+  // Original background image setup
   Widget _buildBackgroundImage() => Positioned.fill(
     child: Stack(
       children: [
         Positioned.fill(
           child: Image.asset(
-            'assets/images/1.png',
+            'assets/images/1.png', // Using original image name
             fit: BoxFit.cover,
             errorBuilder:
                 (context, error, stackTrace) => Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [AppColors.bgDark, AppColors.moonGlow.withValues(alpha: 0.1), AppColors.bgDark],
-                      stops: const [0.0, 0.5, 1.0],
-                    ),
-                  ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.bgDark, AppColors.moonGlow.withValues(alpha: 0.1), AppColors.bgDark],
+                  stops: const [0.0, 0.5, 1.0],
                 ),
+              ),
+            ),
           ),
         ),
         Positioned.fill(
@@ -150,6 +154,7 @@ class _CursorRevealHeroSectionState extends State<CursorRevealHeroSection> with 
     ),
   );
 
+  // Original masked foreground image reveal effect
   Widget _buildMaskedForegroundImage() => AnimatedBuilder(
     animation: Listenable.merge([_breathController, _cursorRevealController]),
     builder: (context, child) {
@@ -171,22 +176,22 @@ class _CursorRevealHeroSectionState extends State<CursorRevealHeroSection> with 
             children: [
               Positioned.fill(
                 child: Image.asset(
-                  'assets/images/2.png',
+                  'assets/images/2.png', // Using original image name
                   fit: BoxFit.cover,
                   errorBuilder:
                       (context, error, stackTrace) => Container(
-                        decoration: BoxDecoration(
-                          gradient: RadialGradient(
-                            radius: 1.2,
-                            colors: [
-                              AppColors.accent.withValues(alpha: 0.4),
-                              AppColors.moonGlow.withValues(alpha: 0.3),
-                              AppColors.bgDark.withValues(alpha: 0.6),
-                            ],
-                            stops: const [0.0, 0.4, 1.0],
-                          ),
-                        ),
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        radius: 1.2,
+                        colors: [
+                          AppColors.accent.withValues(alpha: 0.4),
+                          AppColors.moonGlow.withValues(alpha: 0.3),
+                          AppColors.bgDark.withValues(alpha: 0.6),
+                        ],
+                        stops: const [0.0, 0.4, 1.0],
                       ),
+                    ),
+                  ),
                 ),
               ),
               BackdropFilter(
@@ -200,253 +205,317 @@ class _CursorRevealHeroSectionState extends State<CursorRevealHeroSection> with 
     },
   );
 
+  // NEW: Refined God Rays effect using subtle white gradients.
+  Widget _buildGodRaysEffect() {
+    return Positioned.fill(
+      child: IgnorePointer( // Ensures this layer doesn't block mouse events
+        child: AnimatedBuilder(
+          animation: _breathAnimation,
+          builder: (context, child) {
+            final breathValue = (math.sin(_breathAnimation.value * 2 * math.pi) + 1) / 2;
+            final baseOpacity = 0.05 + (breathValue * 0.05); // Low opacity: 0.05 to 0.1
+
+            final mouseX = _mousePosition.dx;
+            final screenWidth = _screenSize.width;
+            final mouseInfluence = screenWidth > 0 ? (mouseX / screenWidth - 0.5) * 0.15 : 0.0;
+
+            return Stack(
+              alignment: Alignment.topCenter,
+              children: [
+                // Soft central glow
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: const Alignment(0.0, -0.8),
+                      radius: 1.2,
+                      colors: [
+                        Colors.white.withOpacity(0.1),
+                        Colors.white.withOpacity(0),
+                      ],
+                      stops: const [0.0, 0.5],
+                    ),
+                  ),
+                ),
+                // The light rays
+                ...List.generate(9, (index) {
+                  final angle = (index - 4) * 0.25;
+                  final rotation = angle + mouseInfluence;
+                  return Transform.rotate(
+                    angle: rotation,
+                    alignment: Alignment.topCenter,
+                    child: Container(
+                      width: 2.0,
+                      height: _screenSize.height * 0.9,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withOpacity(baseOpacity),
+                            Colors.white.withOpacity(0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // Original content overlay
   Widget _buildContentOverlay(BuildContext context) => Positioned.fill(
     child: Container(
       height: MediaQuery.of(context).size.height,
       width: MediaQuery.of(context).size.width,
       padding: EdgeInsets.symmetric(vertical: verticalPadding(context), horizontal: horizontalPadding(context)),
       child:
-          kIsWeb && MediaQuery.of(context).size.width < 800
-              ? Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(height: screenHeight(context) * .1),
-                        ScrollReveal(
-                          child: Column(
-                            children: [
-                              Text(
-                                'I BUILD THE QUIET SPACE-',
-                                style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                                  color: AppColors.textPrimary,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: _getResponsiveFontSize(context, 56),
-                                  letterSpacing: 4,
-                                  height: 1.1,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'WHERE FUNCTION AND BEAUTY MEET.',
-                                style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                                  color: AppColors.textPrimary,
-                                  fontWeight: FontWeight.w300,
-                                  fontSize: _getResponsiveFontSize(context, 42),
-                                  letterSpacing: 2,
-                                  height: 1.2,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
+      kIsWeb && MediaQuery.of(context).size.width < 800
+          ? Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(height: screenHeight(context) * .1),
+                ScrollReveal(
+                  child: Column(
+                    children: [
+                      Text(
+                        'I BUILD THE QUIET SPACE-',
+                        style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w900,
+                          fontSize: _getResponsiveFontSize(context, 56),
+                          letterSpacing: 4,
+                          height: 1.1,
                         ),
-
-                        SizedBox(height: verticalPadding(context)),
-
-                        ScrollReveal(
-                          delay: const Duration(milliseconds: 200),
-                          child: Container(
-                            constraints: const BoxConstraints(maxWidth: 600),
-                            child: Text(
-                              'I design and develop apps that do more than look good—\nthey tell stories, evoke emotions, and feel alive.',
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: AppColors.textPrimary.withValues(alpha: 0.8),
-                                fontSize: _getResponsiveFontSize(context, 18),
-                                height: 1.6,
-                                letterSpacing: 0.5,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'WHERE FUNCTION AND BEAUTY MEET.',
+                        style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w300,
+                          fontSize: _getResponsiveFontSize(context, 42),
+                          letterSpacing: 2,
+                          height: 1.2,
                         ),
-                      ],
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: verticalPadding(context)),
+
+                ScrollReveal(
+                  delay: const Duration(milliseconds: 200),
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 600),
+                    child: Text(
+                      'I design and develop apps that do more than look good—\nthey tell stories, evoke emotions, and feel alive.',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: AppColors.textPrimary.withValues(alpha: 0.8),
+                        fontSize: _getResponsiveFontSize(context, 18),
+                        height: 1.6,
+                        letterSpacing: 0.5,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
+                ),
+              ],
+            ),
+          ),
 
-                  SizedBox(height: verticalPadding(context)),
-                  ScrollReveal(
-                    delay: const Duration(milliseconds: 800),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Scroll to explore',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textPrimary.withValues(alpha: 0.6),
-                            fontSize: 12,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Container(
-                          width: 1,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [AppColors.accent, AppColors.accent.withValues(alpha: 0)],
-                            ),
-                          ),
-                        ),
-                      ],
+          SizedBox(height: verticalPadding(context)),
+          ScrollReveal(
+            delay: const Duration(milliseconds: 800),
+            child: Column(
+              children: [
+                Text(
+                  'Scroll to explore',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textPrimary.withValues(alpha: 0.6),
+                    fontSize: 12,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: 1,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [AppColors.accent, AppColors.accent.withValues(alpha: 0)],
                     ),
                   ),
-                  const SizedBox(height: 40),
-                ],
-              )
-              : Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(height: screenHeight(context) * .2),
-                        ScrollReveal(
-                          child: Column(
-                            children: [
-                              Text(
-                                'I BUILD THE QUIET SPACE-',
-                                style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                                  color: AppColors.textPrimary,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: _getResponsiveFontSize(context, 56),
-                                  letterSpacing: 4,
-                                  height: 1.1,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              Text(
-                                'WHERE FUNCTION AND BEAUTY MEET.',
-                                style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                                  color: AppColors.textPrimary,
-                                  fontWeight: FontWeight.w300,
-                                  fontSize: _getResponsiveFontSize(context, 42),
-                                  letterSpacing: 2,
-                                  height: 1.2,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 40),
+        ],
+      )
+          : Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(height: screenHeight(context) * .2),
+                ScrollReveal(
+                  child: Column(
+                    children: [
+                      Text(
+                        'I BUILD THE QUIET SPACE-',
+                        style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w900,
+                          fontSize: _getResponsiveFontSize(context, 56),
+                          letterSpacing: 4,
+                          height: 1.1,
                         ),
-
-                        SizedBox(height: verticalPadding(context)),
-                      ],
-                    ),
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        'WHERE FUNCTION AND BEAUTY MEET.',
+                        style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w300,
+                          fontSize: _getResponsiveFontSize(context, 42),
+                          letterSpacing: 2,
+                          height: 1.2,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
-                  if (kIsWeb && MediaQuery.of(context).size.width > 800)
-                    SizedBox(
-                      width: screenWidth(context) - verticalPadding(context) * 2,
-                      child: ScrollReveal(
-                        delay: const Duration(milliseconds: 800),
-                        child: Column(
-                          children: [
-                            Text(
-                              'Scroll to explore',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.textPrimary.withValues(alpha: 0.6),
-                                fontSize: 12,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Container(
-                              width: 1,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [AppColors.accent, AppColors.accent.withValues(alpha: 0)],
-                                ),
-                              ),
-                            ),
-                          ],
+                ),
+
+                SizedBox(height: verticalPadding(context)),
+              ],
+            ),
+          ),
+          if (kIsWeb && MediaQuery.of(context).size.width > 800)
+            SizedBox(
+              width: screenWidth(context) - verticalPadding(context) * 2,
+              child: ScrollReveal(
+                delay: const Duration(milliseconds: 800),
+                child: Column(
+                  children: [
+                    Text(
+                      'Scroll to explore',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textPrimary.withValues(alpha: 0.6),
+                        fontSize: 12,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: 1,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [AppColors.accent, AppColors.accent.withValues(alpha: 0)],
                         ),
                       ),
                     ),
-                  const SizedBox(height: 40),
-                  Container(
-                    width: double.infinity,
-                    height: 1,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.accent.withValues(alpha: 0),
-                          AppColors.accent.withValues(alpha: 0.3),
-                          AppColors.accent.withValues(alpha: 0),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: screenWidth(context) - horizontalPadding(context) * 2,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        ScrollReveal(
-                          delay: const Duration(milliseconds: 300),
-                          child: SizedBox(
-                            width: screenWidth(context) * .15,
-                            child: Text(
-                              'UI UX Designer',
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: AppColors.textPrimary.withValues(alpha: 0.8),
-                                fontSize: _getResponsiveFontSize(context, 18),
-                                height: 1.6,
-                                letterSpacing: 0.5,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                        ScrollReveal(
-                          delay: const Duration(milliseconds: 200),
-                          child: Container(
-                            constraints: const BoxConstraints(maxWidth: 600),
-                            child: Text(
-                              'I design and develop apps that do more than look good—\nthey tell stories, evoke emotions, and feel alive.',
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: AppColors.textPrimary.withValues(alpha: 0.8),
-                                fontSize: _getResponsiveFontSize(context, 18),
-                                height: 1.6,
-                                letterSpacing: 0.5,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                        ScrollReveal(
-                          delay: const Duration(milliseconds: 300),
-                          child: SizedBox(
-                            width: screenWidth(context) * .15,
-                            child: Text(
-                              'Flutter Engineer',
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: AppColors.textPrimary.withValues(alpha: 0.8),
-                                fontSize: _getResponsiveFontSize(context, 18),
-                                height: 1.6,
-                                letterSpacing: 0.5,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  ],
+                ),
+              ),
+            ),
+          const SizedBox(height: 40),
+          Container(
+            width: double.infinity,
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.accent.withValues(alpha: 0),
+                  AppColors.accent.withValues(alpha: 0.3),
+                  AppColors.accent.withValues(alpha: 0),
                 ],
               ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+          SizedBox(
+            width: screenWidth(context) - horizontalPadding(context) * 2,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ScrollReveal(
+                  delay: const Duration(milliseconds: 300),
+                  child: SizedBox(
+                    width: screenWidth(context) * .15,
+                    child: Text(
+                      'UI UX Designer',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: AppColors.textPrimary.withValues(alpha: 0.8),
+                        fontSize: _getResponsiveFontSize(context, 18),
+                        height: 1.6,
+                        letterSpacing: 0.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+                ScrollReveal(
+                  delay: const Duration(milliseconds: 200),
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 600),
+                    child: Text(
+                      'I design and develop apps that do more than look good—\nthey tell stories, evoke emotions, and feel alive.',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: AppColors.textPrimary.withValues(alpha: 0.8),
+                        fontSize: _getResponsiveFontSize(context, 18),
+                        height: 1.6,
+                        letterSpacing: 0.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+                ScrollReveal(
+                  delay: const Duration(milliseconds: 300),
+                  child: SizedBox(
+                    width: screenWidth(context) * .15,
+                    child: Text(
+                      'Flutter Engineer',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: AppColors.textPrimary.withValues(alpha: 0.8),
+                        fontSize: _getResponsiveFontSize(context, 18),
+                        height: 1.6,
+                        letterSpacing: 0.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     ),
   );
 
+  // Original cursor indicator
   Widget _buildCursorRevealIndicator() => AnimatedBuilder(
     animation: Listenable.merge([_pulseAnimation, _cursorRevealAnimation]),
     builder: (context, child) {
@@ -513,6 +582,7 @@ class _CursorRevealHeroSectionState extends State<CursorRevealHeroSection> with 
   }
 }
 
+// Original clipper for the reveal effect
 class _LiquidBlobClipper extends CustomClipper<Path> {
   const _LiquidBlobClipper({
     required this.center,
@@ -554,7 +624,7 @@ class _LiquidBlobClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(covariant _LiquidBlobClipper oldClipper) =>
       center != oldClipper.center ||
-      breathProgress != oldClipper.breathProgress ||
-      isHovering != oldClipper.isHovering ||
-      revealProgress != oldClipper.revealProgress;
+          breathProgress != oldClipper.breathProgress ||
+          isHovering != oldClipper.isHovering ||
+          revealProgress != oldClipper.revealProgress;
 }

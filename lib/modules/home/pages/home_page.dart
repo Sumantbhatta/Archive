@@ -193,7 +193,7 @@ class _HomePageState extends State<HomePage> {
               Container(key: _sectionKeys[3], child: WorksSection(scrollController: _scrollController)),
               Container(key: _sectionKeys[4], child: StandOutSection(scrollController: _scrollController)),
               Container(key: _sectionKeys[5], child: const ContactSection()),
-              const Footer(),
+              Footer(onSectionTap: _scrollToSection),
             ],
           ),
         ),

@@ -105,14 +105,14 @@ class _ContactSectionState extends State<ContactSection> {
     try {
       final subject = Uri.encodeComponent('Portfolio Inquiry');
       final body = Uri.encodeComponent(
-        'Hi Raihan,\n\n'
+        'Hi Sumant,\n\n'
         'Name: ${_nameController.text.trim()}\n'
         'Email: ${_emailController.text.trim()}\n\n'
         'Message:\n${_messageController.text.trim()}\n\n'
         'Best regards,\n${_nameController.text.trim()}',
       );
 
-      final mailtoUrl = 'mailto:lraihan@hackermail.com?subject=$subject&body=$body';
+      final mailtoUrl = 'mailto:sumantsbhatta@gmail.com?subject=$subject&body=$body';
       final uri = Uri.parse(mailtoUrl);
 
       if (await canLaunchUrl(uri)) {
@@ -143,7 +143,7 @@ class _ContactSectionState extends State<ContactSection> {
               children: [
                 Icon(Icons.error, color: Colors.white),
                 SizedBox(width: 8),
-                Expanded(child: Text('Error: Please email me directly at lraihan@hackermail.com')),
+                Expanded(child: Text('Error: Please email me directly at sumantsbhatta@gmail.com')),
               ],
             ),
             backgroundColor: Colors.red,
@@ -200,7 +200,7 @@ class _ContactSectionState extends State<ContactSection> {
       const SizedBox(height: 16),
 
       Text(
-        'Have a project in mind? Send me a message below or email me directly at lraihan@hackermail.com',
+        'Have a project in mind? Send me a message below or email me directly at sumantsbhatta@gmail.com',
         style: theme.textTheme.bodyLarge?.copyWith(color: AppColors.textPrimary.withValues(alpha: .8)),
       ),
       const SizedBox(height: 32),

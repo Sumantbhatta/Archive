@@ -1,75 +1,62 @@
-import 'dart:async';
-
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:polymorphism/core/constant.dart';
-import 'package:polymorphism/core/theme/app_theme.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class Footer extends StatefulWidget {
-  const Footer({super.key});
+// Make sure these imports point to your project's theme and constants
+import 'package:polymorphism/core/theme/app_theme.dart';
+import 'package:polymorphism/core/constant.dart';
 
-  @override
-  State<Footer> createState() => _FooterState();
-}
+// ===================================================================
+// Main Footer Widget
+// ===================================================================
+class Footer extends StatelessWidget {
+  final Function(int) onSectionTap;
 
-class _FooterState extends State<Footer> {
-  late Timer _timer;
-  String _jakartaTime = '';
+  const Footer({
+    super.key,
+    required this.onSectionTap,
+  });
 
-  @override
-  void initState() {
-    super.initState();
-    _updateTime();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _updateTime());
-  }
-
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
-  }
-
-  void _updateTime() {
-    final utcNow = DateTime.now().toUtc();
-    final gmt7Time = utcNow.add(const Duration(hours: 7));
-    final formatter = DateFormat('h:mm a');
-    setState(() {
-      _jakartaTime = formatter.format(gmt7Time);
-    });
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      debugPrint('Could not launch $url');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 768;
+    // Removed padding to allow it to be flush with screen edges
+    return Container(
+      color: AppColors.bgDark,
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          // 1. Enhanced Green Aura ✨
+          _buildAura(),
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.bgDark,
-        border: Border(top: BorderSide(color: AppColors.textPrimary.withValues(alpha: .1))),
+          // 2. Main Console Body (now full-width)
+          _buildConsoleBody(context),
+        ],
       ),
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: horizontalPadding(context),
-          vertical: isMobile ? verticalPadding(context) * 0.6 : verticalPadding(context),
-        ),
-        child: Column(
-          children: [
-            if (isMobile) _buildMobileLayout(context) else _buildDesktopLayout(context),
-            SizedBox(height: isMobile ? 16 : 24),
-            Image.asset(
-              'assets/images/logo.png',
-              fit: BoxFit.fitWidth,
-              height: isMobile ? 40 : 60,
-              errorBuilder:
-                  (context, error, stackTrace) => Container(
-                    height: isMobile ? 40 : 60,
-                    width: 100,
-                    color: AppColors.textPrimary.withValues(alpha: 0.1),
-                    child: const Icon(Icons.image_not_supported, color: AppColors.textPrimary),
-                  ),
+    );
+  }
+
+  /// Builds the semi-circle green glow behind the console.
+  Widget _buildAura() {
+    return Transform.translate(
+      offset: const Offset(0, 30),
+      child: Container(
+        width: 600, // Made the base width of the glow wider
+        height: 150,
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.green.withOpacity(0.5),
+              // Increased blur and spread for a wider, more acquired glow
+              blurRadius: 150,
+              spreadRadius: 45,
             ),
           ],
         ),
@@ -77,111 +64,228 @@ class _FooterState extends State<Footer> {
     );
   }
 
-  Widget _buildDesktopLayout(BuildContext context) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Text(
-        '© 2025 Raihan.',
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary.withValues(alpha: .7)),
-      ),
-      Text(
-        'lraihan@hackermail.com',
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary.withValues(alpha: .7)),
-      ),
-      Text(
-        'Jakarta $_jakartaTime',
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary.withValues(alpha: .7)),
-      ),
-
-      const Row(
-        children: [
-          _SocialIcon(icon: Icons.code, tooltip: 'GitHub', url: 'https://github.com/lraihan'),
-          SizedBox(width: 16),
-          _SocialIcon(icon: Icons.work, tooltip: 'LinkedIn', url: 'https://www.linkedin.com/in/raihan-fadli-dev/'),
-          SizedBox(width: 16),
-          _SocialIcon(
-            icon: LucideIcons.instagram,
-            tooltip: 'Instagram',
-            url: 'https://www.instagram.com/locio_raihan/',
+  /// Builds the main dark container that holds all the elements.
+  Widget _buildConsoleBody(BuildContext context) {
+    return Container(
+      // Changed to double.infinity for a full-width design
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 60),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withOpacity(0.5), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.5),
+            blurRadius: 25,
+            spreadRadius: 5,
+            offset: const Offset(0, 10),
+          ),
+          BoxShadow(
+            color: Colors.white.withOpacity(0.05),
+            blurRadius: 1,
+            spreadRadius: -1,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
-    ],
-  );
-
-  Widget _buildMobileLayout(BuildContext context) => Column(
-    children: [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            '© 2025 Raihan.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.textPrimary.withValues(alpha: .7), fontSize: 12),
-          ),
-          Text(
-            'Jakarta $_jakartaTime',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.textPrimary.withValues(alpha: .7), fontSize: 12),
-          ),
+          _buildKeyboardSection(),
+          const SizedBox(width: 20),
+          const Expanded(child: _GrillSection()),
+          const SizedBox(width: 20),
+          _CRTScreenSection(),
         ],
       ),
-      const SizedBox(height: 12),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Text(
-              'lraihan@hackermail.com',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.textPrimary.withValues(alpha: .7), fontSize: 12),
+    );
+  }
+
+  /// Builds the left-hand side keyboard section.
+  Widget _buildKeyboardSection() {
+    // This section remains the same, but the keys inside now have hover animations
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _KeyButton(text: 'HOME', onTap: () => onSectionTap(0)),
+            const SizedBox(width: 8),
+            _KeyButton(text: 'CV', onTap: () => onSectionTap(1), keyColor: const Color(0xFF4A4A4A)),
+            const SizedBox(width: 8),
+            _KeyButton(
+              text: 'IG',
+              tooltip: 'Instagram',
+              onTap: () => _launchUrl('https://instagram.com'),
+              gradient: const LinearGradient(
+                colors: [Color(0xFFF9CE34), Color(0xFFEE2A7B), Color(0xFF6228D7)],
+                begin: Alignment.bottomLeft,
+                end: Alignment.topRight,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            _KeyButton(text: '@', tooltip: 'Email', onTap: () => _launchUrl('mailto:contact@example.com'), keyColor: const Color(0xFFB9A488)),
+            const SizedBox(width: 8),
+            _KeyButton(text: 'HIRE ME', onTap: () => onSectionTap(5), keyColor: const Color(0xFF4A4A4A)),
+            const SizedBox(width: 8),
+            _KeyButton(text: 'X', tooltip: 'Example Link', onTap: () {}, keyColor: const Color(0xFF4A4A4A)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            _KeyButton(text: 'CALL ME', onTap: () => _launchUrl('tel:+1234567890')),
+            const SizedBox(width: 8),
+            _KeyButton(text: 'DB', tooltip: 'Dribbble', onTap: () => _launchUrl('https://dribbble.com'), keyColor: const Color(0xFFEA4C89)),
+            const SizedBox(width: 8),
+            _KeyButton(text: 'BH', tooltip: 'Behance', onTap: () => _launchUrl('https://behance.net'), keyColor: const Color(0xFF053EFF)),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// ===================================================================
+// Helper Widgets
+// ===================================================================
+
+class _GrillSection extends StatelessWidget {
+  const _GrillSection();
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: List.generate(
+          18,
+              (index) => Container(
+            height: 2,
+            margin: const EdgeInsets.symmetric(vertical: 2.5),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const Row(
-            children: [
-              _SocialIcon(icon: Icons.code, tooltip: 'GitHub', url: 'https://github.com/lraihan'),
-              SizedBox(width: 12),
-              _SocialIcon(icon: Icons.work, tooltip: 'LinkedIn', url: 'https://www.linkedin.com/in/raihan-fadli-dev/'),
-              SizedBox(width: 12),
-              _SocialIcon(
-                icon: LucideIcons.instagram,
-                tooltip: 'Instagram',
-                url: 'https://www.instagram.com/locio_raihan/',
+        ),
+      ),
+    );
+  }
+}
+
+/// The CRT screen display with your custom glowing image logo. 🖼️
+class _CRTScreenSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    const screenColor = Color(0xFF39FF14); // Neon green
+
+    return Container(
+      width: 170,
+      height: 170,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF181818),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black, width: 2),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.black,
+              border: Border.all(color: const Color(0xFF101010), width: 4),
+              boxShadow: const [BoxShadow(color: Colors.black, blurRadius: 10, spreadRadius: 5)],
+            ),
+            child: ClipOval(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Background glow for the whole screen
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [screenColor.withOpacity(0.3), Colors.transparent],
+                        stops: const [0.3, 1.0],
+                      ),
+                    ),
+                  ),
+
+                  // Your custom image logo with glow effect
+                  Padding(
+                    padding: const EdgeInsets.all(35.0),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // The "Glow" layer (a blurred, colored version of the image)
+                        ImageFiltered(
+                          imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                          child: Image.asset(
+                            'assets/images/image.png',
+                            color: screenColor.withOpacity(0.8),
+                            colorBlendMode: BlendMode.srcIn,
+                          ),
+                        ),
+                        // The "Top" layer (the sharp image)
+                        Image.asset(
+                          'assets/images/image.png',
+                          color: screenColor,
+                          colorBlendMode: BlendMode.srcIn,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Scanline Overlay
+                  RepaintBoundary(child: _ScanLineEffect()),
+                ],
               ),
-            ],
+            ),
           ),
+          // Screws
+          Positioned(top: 0, left: 0, child: _buildScrew()),
+          Positioned(top: 0, right: 0, child: _buildScrew()),
+          Positioned(bottom: 0, left: 0, child: _buildScrew()),
+          Positioned(bottom: 0, right: 0, child: _buildScrew()),
         ],
       ),
-    ],
-  );
+    );
+  }
+
+  Widget _buildScrew() {
+    return Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(
+        color: const Color(0xFF454545),
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.black.withOpacity(0.7), width: 1),
+      ),
+    );
+  }
 }
 
-class _SocialIcon extends StatefulWidget {
-  const _SocialIcon({required this.icon, required this.tooltip, required this.url});
-  final IconData icon;
-  final String tooltip;
-  final String url;
-
+class _ScanLineEffect extends StatefulWidget {
   @override
-  State<_SocialIcon> createState() => _SocialIconState();
+  State<_ScanLineEffect> createState() => _ScanLineEffectState();
 }
 
-class _SocialIconState extends State<_SocialIcon> with SingleTickerProviderStateMixin {
+class _ScanLineEffectState extends State<_ScanLineEffect> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  bool _isHovered = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(duration: AppMotion.fast, vsync: this);
-    _scaleAnimation = Tween<double>(
-      begin: 1,
-      end: 1.1,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat();
   }
 
   @override
@@ -190,46 +294,127 @@ class _SocialIconState extends State<_SocialIcon> with SingleTickerProviderState
     super.dispose();
   }
 
-  void _handleHover(bool isHovered) {
-    setState(() => _isHovered = isHovered);
-    if (isHovered) {
-      _controller.forward();
-    } else {
-      _controller.reverse();
-    }
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) => CustomPaint(
+        size: const Size(double.infinity, double.infinity),
+        painter: _ScanLinePainter(_controller.value),
+      ),
+    );
   }
+}
 
-  Future<void> _launchUrl() async {
-    final uri = Uri.parse(widget.url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
+class _ScanLinePainter extends CustomPainter {
+  final double progress;
+  _ScanLinePainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scanLinePaint = Paint()
+      ..color = Colors.white.withOpacity(0.15)
+      ..strokeWidth = 2.0;
+    final y = size.height * progress;
+    canvas.drawLine(Offset(0, y), Offset(size.width, y), scanLinePaint);
   }
 
   @override
-  Widget build(BuildContext context) => MouseRegion(
-    onEnter: (_) => _handleHover(true),
-    onExit: (_) => _handleHover(false),
-    child: ScaleTransition(
-      scale: _scaleAnimation,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: _launchUrl,
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Tooltip(
-              message: widget.tooltip,
-              child: Icon(
-                widget.icon,
-                size: 20,
-                color: _isHovered ? AppColors.accent : AppColors.textPrimary.withValues(alpha: .7),
-              ),
-            ),
+  bool shouldRepaint(covariant _ScanLinePainter oldDelegate) => oldDelegate.progress != progress;
+}
+
+/// A 3D key button with press AND hover animations.
+class _KeyButton extends StatefulWidget {
+  final String text;
+  final VoidCallback onTap;
+  final Color? keyColor;
+  final Gradient? gradient;
+  final String? tooltip;
+
+  const _KeyButton({
+    required this.text,
+    required this.onTap,
+    this.keyColor,
+    this.gradient,
+    this.tooltip,
+  });
+
+  @override
+  State<_KeyButton> createState() => _KeyButtonState();
+}
+
+class _KeyButtonState extends State<_KeyButton> {
+  bool _isPressed = false;
+  bool _isHovered = false; // New state for hover
+
+  void _onTapDown(TapDownDetails details) => setState(() {
+    _isPressed = true;
+    HapticFeedback.lightImpact();
+  });
+
+  void _onTapUp(TapUpDetails details) => setState(() {
+    _isPressed = false;
+    widget.onTap();
+  });
+
+  void _onTapCancel() => setState(() => _isPressed = false);
+
+  @override
+  Widget build(BuildContext context) {
+    final keyFaceColor = widget.keyColor ?? const Color(0xFF3A3A3A);
+    final keySideColor = Color.lerp(keyFaceColor, Colors.black, 0.4)!;
+    const keyHeight = 8.0;
+    final topPadding = _isPressed ? keyHeight : 0.0;
+    final bottomPadding = _isPressed ? 0.0 : keyHeight;
+
+    final keyFace = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: widget.gradient == null ? keyFaceColor : null,
+        gradient: widget.gradient,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.black.withOpacity(0.2)),
+      ),
+      child: Text(
+        widget.text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
+          shadows: [Shadow(color: Colors.black, blurRadius: 2, offset: Offset(1, 1))],
+        ),
+      ),
+    );
+
+    final keyBody = Container(
+      decoration: BoxDecoration(
+        color: keySideColor,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 2, spreadRadius: 1)],
+      ),
+      child: keyFace,
+    );
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedScale(
+        // The new hover animation
+        scale: _isHovered ? 1.05 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: GestureDetector(
+          onTapDown: _onTapDown,
+          onTapUp: _onTapUp,
+          onTapCancel: _onTapCancel,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 100),
+            curve: Curves.easeOut,
+            padding: EdgeInsets.only(top: topPadding, bottom: bottomPadding),
+            child: keyBody,
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

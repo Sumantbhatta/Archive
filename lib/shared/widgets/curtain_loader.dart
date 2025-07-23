@@ -130,7 +130,7 @@ class _CurtainLoaderState extends State<CurtainLoader> with TickerProviderStateM
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Image.asset(
-                            'assets/images/logo.png',
+                            'assets/images/image.png',
                             height: 100,
                             fit: BoxFit.contain,
                             color: AppColors.textPrimary,

@@ -19,25 +19,25 @@ class CareerEvent {
 
   static List<CareerEvent> get sampleEvents => [
     const CareerEvent(
-      year: 2019,
+      year: 2022,
       title: 'Intern Mobile Developer',
       description:
-          'Started career in mobile development as an intern. the focus was on assisting in the creation of mobile applications.',
+          'Started career in mobile development as an intern.the focus was on assisting in the creation of college mobile applications.',
       icon: Icons.code,
-      company: 'Lontar Lab.',
-      location: 'Bandung, Indonesia',
+      company: 'Srinivas University',
+      location: 'Surathkal, Mangalore',
     ),
     const CareerEvent(
-      year: 2020,
+      year: 2024,
       title: 'Java Software Engineer',
       description:
-          "Actively involved in the maintenance and development of Collega's Application Java Project Olibs Backend 724.",
+          "Actively involved in the maintenance and development of MI Application Java Project Olibs Backend 724.",
       icon: Icons.code,
-      company: 'PT Collega Inti Pratama',
-      location: 'Jakarta, Indonesia',
+      company: 'ALT Digital Technologies',
+      location: 'Sirsi, Karnataka',
     ),
     const CareerEvent(
-      year: 2022,
+      year: 2024,
       title: 'Flutter Developer',
       description:
           "Specialized in Flutter, my focus was creating new and innovative flutter applications that leverage the framework's capabilities for high performance and beautiful UI.",

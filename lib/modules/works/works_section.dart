@@ -112,7 +112,7 @@ class _WorksSectionState extends State<WorksSection> {
           if (isMobile) ...[
             _buildProject(
               context,
-              'FE Touch',
+              'Avail',
               'A sleek, tablet-based app made for bank tellers. FE Touch brings a fresh, modern interface to everyday banking tasks.',
               'assets/images/works/project1-1.png',
               ProjectType.desktop,
